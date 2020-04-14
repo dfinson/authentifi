@@ -1,10 +1,10 @@
 package dev.sanda.authentifi.web.controller;
 
 
-import dev.sanda.jwtauthtemplate.config.AuthenticationServerConfiguration;
-import dev.sanda.jwtauthtemplate.security.jwt.JwtTokenProvider;
-import dev.sanda.jwtauthtemplate.web.dto.AuthenticationRequest;
-import dev.sanda.jwtauthtemplate.web.dto.DirectSignupRequest;
+import dev.sanda.authentifi.config.AuthenticationServerConfiguration;
+import dev.sanda.authentifi.security.jwt.JwtTokenProvider;
+import dev.sanda.authentifi.web.dto.AuthenticationRequest;
+import dev.sanda.authentifi.web.dto.DirectSignupRequest;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ public class AuthenticationController {
     private AuthenticationServerConfiguration config;
 
     @PostMapping("/auth/signin")
-    public void signin(@RequestBody AuthenticationRequest authRequest, HttpServletResponse response) {
+    public void signin(@RequestBody AuthenticationRequest authRequest, HttpServletRequest request, HttpServletResponse response) {
         try {
             //get username & password
             val username = authRequest.getUsername();
@@ -40,9 +40,9 @@ public class AuthenticationController {
             val userDetails = config.userDetailsService().loadUserByUsername(username);
             if(userDetails == null) throw new UsernameNotFoundException("Username " + username + " not found");
             // assign access token
-            response.addCookie(jwtTokenProvider.createAccessTokenCookie(username, userDetails.getAuthorities()));
+            response.addCookie(jwtTokenProvider.createAccessTokenCookie(username, userDetails.getAuthorities(), request));
             // handle remember me
-            jwtTokenProvider.addRefreshTokenCookieIfEnabled(username, authRequest.isRememberMe(), response);
+            jwtTokenProvider.addRefreshTokenCookieIfEnabled(username, authRequest.isRememberMe(), request, response);
             // all good!
             response.setStatus(200);
         } catch (AuthenticationException e) {
